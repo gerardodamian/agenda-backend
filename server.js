@@ -75,6 +75,31 @@ app.post("/turnos/:fecha/:hora/:consultorio", (req, res) => {
     );
 });
 
+// Obtener todos los turnos (nuevo endpoint)
+app.get("/turnos", (req, res) => {
+    db.all("SELECT * FROM turnos", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+
+        const datos = {};
+        rows.forEach((row) => {
+            if (!datos[row.fecha]) datos[row.fecha] = {};
+            datos[row.fecha][`${row.hora}-${row.consultorio}`] = {
+                nombre: row.nombre,
+                telefono: row.telefono,
+                deposito: !!row.deposito,
+                montoDeposito: row.montoDeposito,
+                comentario: row.comentario,
+            };
+        });
+        res.json(datos);
+    });
+});
+
+
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});
+
+app.get("/", (req, res) => {
+    res.send("API de Agenda funcionando 🚀");
 });
