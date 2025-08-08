@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Crear base de datos SQLite
+// Crear base de datos SQLite (persistente en Render)
 const dbPath = path.join(__dirname, "agenda.db");
 const db = new sqlite3.Database(dbPath);
 
@@ -28,6 +28,30 @@ db.run(`
     PRIMARY KEY (fecha, hora, consultorio)
   )
 `);
+
+// Ruta de prueba
+app.get("/", (req, res) => {
+    res.json({ status: "API de Agenda funcionando 🚀" });
+});
+
+// Obtener todos los turnos
+app.get("/turnos", (req, res) => {
+    db.all("SELECT * FROM turnos", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const datos = {};
+        rows.forEach((row) => {
+            if (!datos[row.fecha]) datos[row.fecha] = {};
+            datos[row.fecha][`${row.hora}-${row.consultorio}`] = {
+                nombre: row.nombre,
+                telefono: row.telefono,
+                deposito: !!row.deposito,
+                montoDeposito: row.montoDeposito,
+                comentario: row.comentario,
+            };
+        });
+        res.json(datos);
+    });
+});
 
 // Obtener turnos de una fecha
 app.get("/turnos/:fecha", (req, res) => {
@@ -75,31 +99,6 @@ app.post("/turnos/:fecha/:hora/:consultorio", (req, res) => {
     );
 });
 
-// Obtener todos los turnos (nuevo endpoint)
-app.get("/turnos", (req, res) => {
-    db.all("SELECT * FROM turnos", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        const datos = {};
-        rows.forEach((row) => {
-            if (!datos[row.fecha]) datos[row.fecha] = {};
-            datos[row.fecha][`${row.hora}-${row.consultorio}`] = {
-                nombre: row.nombre,
-                telefono: row.telefono,
-                deposito: !!row.deposito,
-                montoDeposito: row.montoDeposito,
-                comentario: row.comentario,
-            };
-        });
-        res.json(datos);
-    });
-});
-
-
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
-});
-
-app.get("/", (req, res) => {
-    res.send("API de Agenda funcionando 🚀");
 });
