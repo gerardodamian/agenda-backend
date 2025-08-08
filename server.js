@@ -115,3 +115,19 @@ if (process.env.RENDER === "true") {
     }, 10 * 60 * 1000); // cada 10 minutos
 }
 
+// Obtener cantidad de turnos ocupados en un mes
+app.get("/turnos-mes/:anio/:mes", (req, res) => {
+    const { anio, mes } = req.params;
+    const fechaInicio = `${anio}-${mes.padStart(2, "0")}-01`;
+    const fechaFin = `${anio}-${mes.padStart(2, "0")}-31`; // simplificado
+
+    db.all(
+        "SELECT COUNT(*) as total FROM turnos WHERE fecha BETWEEN ? AND ? AND (nombre != '' OR telefono != '')",
+        [fechaInicio, fechaFin],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ total: rows[0].total });
+        }
+    );
+});
+
