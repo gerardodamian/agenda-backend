@@ -102,3 +102,16 @@ app.post("/turnos/:fecha/:hora/:consultorio", (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+// Mantener vivo el servidor en Render (auto-ping cada 10 minutos)
+if (process.env.RENDER === "true") {
+    const axios = require("axios");
+    const BACKEND_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+    
+    setInterval(() => {
+        axios.get(BACKEND_URL)
+            .then(() => console.log("🔄 Auto-ping enviado para mantener vivo el backend"))
+            .catch(err => console.error("❌ Error en auto-ping:", err.message));
+    }, 10 * 60 * 1000); // cada 10 minutos
+}
+
